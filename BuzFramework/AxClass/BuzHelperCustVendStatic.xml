@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperCustVendStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperCustVendStatic
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>lookupCustVendAccount</Name>
+				<Source><![CDATA[
+    public static void lookupCustVendAccount(FormControl _formControl, CustVendACType _custVendACType, SysGroup _custVendGroupId = "")
+    {
+        if( _custVendACType == CustVendACType::Cust )
+        {
+            Query query = new Query();
+            QueryBuildDataSource queryBuildDataSource;
+    
+            SysTableLookup sysTableLookup = SysTableLookup::newParameters(tableNum(custTable), _formControl);
+    
+            sysTableLookup.addLookupField(fieldNum(CustTable, AccountNum));
+            sysTableLookup.addLookupMethod(tableMethodStr(CustTable, name));
+            sysTableLookup.addLookupField(fieldNum(CustTable, CustGroup));
+    
+            queryBuildDataSource = query.addDataSource(tableNum(CustTable));
+
+            if( _custVendGroupId )
+                queryBuildDataSource.addRange(fieldNum(CustTable, CustGroup)).value(_custVendGroupId);
+    
+            sysTableLookup.parmQuery(query);
+    
+            sysTableLookup.performFormLookup();
+        }
+        else
+        {
+            Query query = new Query();
+            QueryBuildDataSource queryBuildDataSource;
+    
+            SysTableLookup sysTableLookup = SysTableLookup::newParameters(tableNum(VendTable), _formControl);
+    
+            sysTableLookup.addLookupField(fieldNum(VendTable, AccountNum));
+            sysTableLookup.addLookupMethod(tableMethodStr(VendTable, name));
+            sysTableLookup.addLookupField(fieldNum(VendTable, VendGroup));
+    
+            queryBuildDataSource = query.addDataSource(tableNum(VendTable));
+    
+            sysTableLookup.parmQuery(query);
+    
+            sysTableLookup.performFormLookup();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>lookupCustVendGroup</Name>
+				<Source><![CDATA[
+    public static void lookupCustVendGroup(FormControl _formControl, CustVendACType _custVendACType)
+    {
+        if( _custVendACType == CustVendACType::Cust )
+        {
+            Query query = new Query();
+            QueryBuildDataSource queryBuildDataSource;
+    
+            SysTableLookup sysTableLookup = SysTableLookup::newParameters(tableNum(CustGroup), _formControl);
+    
+            sysTableLookup.addLookupField(fieldNum(CustGroup, CustGroup ));
+            sysTableLookup.addLookupField(fieldNum(CustGroup, Name));
+    
+            queryBuildDataSource = query.addDataSource(tableNum(CustGroup));
+    
+            sysTableLookup.parmQuery(query);
+    
+            sysTableLookup.performFormLookup();
+        }
+        else
+        {
+            Query query = new Query();
+            QueryBuildDataSource queryBuildDataSource;
+    
+            SysTableLookup sysTableLookup = SysTableLookup::newParameters(tableNum(VendGroup), _formControl);
+    
+            sysTableLookup.addLookupField(fieldNum(VendGroup, VendGroup));
+            sysTableLookup.addLookupField(fieldNum(VendGroup, Name));
+    
+            queryBuildDataSource = query.addDataSource(tableNum(VendGroup));
+    
+            sysTableLookup.parmQuery(query);
+    
+            sysTableLookup.performFormLookup();
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

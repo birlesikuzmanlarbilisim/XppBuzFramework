@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperGlobalStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperGlobalStatic
+{
+
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>mthNameTR</Name>
+				<Source><![CDATA[
+	public static Name mthNameTR(int _month)
+    {
+        switch (_month)
+        {
+            case 1:
+                return "Ocak";
+            case 2:
+                return "Şubat";
+            case 3:
+                return "Mart";
+            case 4:
+                return "Nisan";
+            case 5:
+                return "Mayıs";
+            case 6:
+                return "Haziran";
+            case 7:
+                return "Temmuz";
+            case 8:
+                return "Ağustos";
+            case 9:
+                return "Eylül";
+            case 10:
+                return "Ekim";
+            case 11:
+                return "Kasım";
+            default:
+                return "Aralık";
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshCallerDatasource</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Refresh caller datasource.
+    /// If _datasourceName parameter not specified method will call Ctrl + F5 functions
+    /// If _datasourceName parameter specified method will call datasource executeQuery or datasource reread and refresh methods
+    /// </summary>
+    /// <param name = "_args">Arguments class</param>
+    /// <param name = "_datasourceName">Caller datasource name you can use like formDataSourceStr(CustTable,DirPartyTable )</param>
+    /// <param name = "_callRereadAndRefreshMethods">if this is true call reread and refresh methods else call executeQuery method</param>
+    /// <param name = "_refreshPreviousCallerForm">if there is previous caller form you can refresh this form</param>
+    public static void refreshCallerDatasource(Args _args, boolean _callRereadAndRefreshMethods = false, anytype _datasourceName = "",
+        boolean _refreshPreviousCallerForm = false, boolean _callRereadAndRefreshMethodsPreviousCallerForm = false, anytype _datasourceNamePreviousCallerForm = "")
+    {
+        FormRun formRun = _args.caller();
+ 
+        if(formRun)
+        {
+            if( _datasourceName == "" )
+            {
+                #Task
+                formRun.task(#taskRefresh);
+            }
+            else
+            {
+                FormDataSource formDatasource = formRun.dataSource(_datasourceName);
+                if( _callRereadAndRefreshMethods )
+                {
+                    formDatasource.refresh();
+                    formDatasource.reread();
+                }
+                else
+                {
+                    formDatasource.executeQuery();
+                }
+            }
+
+            if( _refreshPreviousCallerForm && formRun.args() != null && formRun.args().caller() != null )
+            {
+                BuzHelperGlobalStatic::refreshCallerDatasource(formRun.args(), _callRereadAndRefreshMethodsPreviousCallerForm, _datasourceNamePreviousCallerForm);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDateFromDialog</Name>
+				<Source><![CDATA[
+    static TransDate getDateFromDialog(boolean _throwErrorIfEmpty = false,
+            Description     _caption = "",
+            Description255  _helpText1 = "",
+            Description255  _helpText2 = "",
+            Description255  _helpText3 = "",
+            TransDate       _defaultTransDate = dateNull())
+    {
+        Dialog dialog;
+        DialogField dfTransDate;
+        ;
+        
+        dialog = new dialog(_caption);
+        if( _helpText1 )
+			dialog.addText(_helpText1);
+        if( _helpText2 )
+            dialog.addText(_helpText2);
+        if( _helpText3 )
+            dialog.addText(_helpText3);
+        
+        dfTransDate = dialog.addFieldValue(extendedTypeStr(TransDate), _defaultTransDate);
+        if( !dialog.run() )
+            return dateNull();
+        
+        if( _throwErrorIfEmpty && !dfTransDate.value() )
+            throw error("Tarih boş bırakılamaz");
+        
+        return dfTransDate.value();
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDescriptionFromDialog</Name>
+				<Source><![CDATA[
+    static Description255 getDescriptionFromDialog(boolean _throwErrorIfEmpty = false,
+		Description     _caption = "",
+		Description255 _helpText1 = "",
+		Description255 _helpText2 = "",
+		Description255 _helpText3 = "")
+    {
+        Dialog dialog;
+        DialogField dfDescription;
+
+        dialog = new dialog(_caption);
+        if( _helpText1 )
+			dialog.addText(_helpText1);
+        if( _helpText2 )
+			dialog.addText(_helpText2);
+        if( _helpText3 )
+			dialog.addText(_helpText3);
+
+        dfDescription = dialog.addField(extendedTypeStr(Description255));
+        dfDescription.showLabel(false);
+        if( !dialog.run() )
+			return "";
+
+        if( _throwErrorIfEmpty && !dfDescription.value() )
+			throw error("Açıklama boş bırakılamaz");
+
+        return dfDescription.value();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>userId2HCMWorker</Name>
+				<Source><![CDATA[
+    public static HcmWorker userId2HCMWorker(UserId _userId)
+    {
+        DirPersonUser   personUser;
+        HcmWorker       worker;
+
+        select firstonly worker
+            exists join personUser
+				where worker.Person == personUser.PersonParty
+				&& personUser.User == _userId;
+
+        return worker;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>userId2PersonnelNumber</Name>
+				<Source><![CDATA[
+    public static HcmPersonnelNumberId userId2PersonnelNumber(UserId _userId)
+    {
+        return BuzHelperGlobalStatic::userId2HCMWorker(_userId).PersonnelNumber;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>copyTableFromCommon</Name>
+				<Source><![CDATA[
+    public static Common copyTableFromCommon( Common _fromCommon, Common _toCommon )
+    {
+        SysDictTable    dictTable = new SysDictTable(_toCommon.TableId);
+        int             i;
+        int             fieldCnt;
+        fieldId         fieldId, fieldIdTmp;
+        FieldName       fieldName;
+        ;
+        
+        fieldCnt = dictTable.fieldCntWithoutSys();
+        for ( i = 1 ; i <= fieldCnt ; i++ )
+        {
+            fieldId     = dictTable.fieldCnt2Id(i);
+            fieldName   = fieldid2name(_toCommon.TableId, fieldId);
+            fieldIdTmp  = fieldName2id(_fromCommon.TableId, fieldName);
+        
+            if( fieldIdTmp && fieldId )
+            {
+                _toCommon.(fieldId) = _fromCommon.(fieldIdTmp);
+            }
+        }
+        
+        return _toCommon;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>jumpRef</Name>
+				<Source><![CDATA[
+    public static void jumpRef(str _menuItemName, object _element = null, Common _argsRecord = null )
+    {
+        Args            args;
+        MenuFunction    menuFunction;
+
+        args = new Args();
+        menuFunction = new MenuFunction(_menuItemName, MenuItemType::Display);
+        args = new Args(menuFunction.object());
+        args.caller(_element);
+        args.record(_argsRecord);
+        menuFunction.run(args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isThereAnyChangeInRecord</Name>
+				<Source><![CDATA[
+    static boolean isThereAnyChangeInRecord( Common _fromCommon, Common _toCommon )
+    {
+        SysDictTable    dictTable = new SysDictTable(_toCommon.TableId);
+        int             i;
+        int             fieldCnt;
+        fieldId         fieldId, fieldIdTmp;
+        FieldName       fieldName;
+        
+        fieldCnt = dictTable.fieldCntWithoutSys();
+        for ( i = 1 ; i <= fieldCnt ; i++ )
+        {
+            fieldId     = dictTable.fieldCnt2Id(i);
+            fieldName   = fieldid2name(_toCommon.TableId, fieldId);
+            fieldIdTmp  = fieldName2id(_fromCommon.TableId, fieldName);
+        
+            if( fieldIdTmp && fieldId )
+            {
+                if( _toCommon.(fieldId) != _fromCommon.(fieldIdTmp) )
+                        return true;
+            }
+        }
+        
+        return false;
+        
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDateTimeDifferance</Name>
+				<Source><![CDATA[
+    static str getDateTimeDifferance(utcdatetime date1, utcdatetime date2)
+    {
+        int64 datetimediff;
+        int diffsec;
+        int64 diffmin;
+        int64 diffhour;
+        int64 diffday;
+        str diffstr;
+        ;
+        
+        datetimediff = datetimeutil::getDifference(date1, date2);
+        if (datetimediff < 0)
+                datetimediff = datetimeutil::getDifference(date2, date1);
+        
+        diffday         = datetimediff div (24 * 60 * 60);
+        datetimediff    = datetimediff - diffday * 24 * 60 * 60;
+        diffhour        = datetimediff div (60 * 60);
+        datetimediff    = datetimediff - diffhour * 60 * 60;
+        diffmin         = datetimediff div 60;
+        
+        diffstr = "";
+        diffstr += diffday  > 0 ? int642str(diffday)  + " gün "   : "";
+        diffstr += diffhour > 0 ? int642str(diffhour) + " sa "    : "";
+        diffstr += diffmin  > 0 ? int642str(diffmin)  + " dk "    : "";
+        
+        return diffstr;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteFromContainerByValue</Name>
+				<Source><![CDATA[
+    static container deleteFromContainerByValue( container _con, anytype _value )
+    {
+        int indexOfContainerItem;
+        container resultCon = _con;
+        
+        indexOfContainerItem = confind( resultCon, _value );
+        
+        if( indexOfContainerItem )
+                resultCon = condel(resultCon, indexOfContainerItem, 1 );
+        
+        return resultCon;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>doesMandatoryFieldsFilledIn</Name>
+				<Source><![CDATA[
+    public static boolean doesMandatoryFieldsFilledIn( Common _common )
+    {
+        SysDictTable    dictTableTmp = new SysDictTable(_common.TableId);
+        SysDictField    dictField;
+        int             i;
+        int             fieldCnt;
+        fieldId         fieldId;
+        boolean         ret = true;
+        
+        fieldCnt = dictTableTmp.fieldCntWithoutSys();
+        for ( i = 1 ; i <= fieldCnt ; i++ )
+        {
+            fieldId  = dictTableTmp.fieldCnt2Id(i);
+            dictField = new SysDictField(_common.TableId, fieldId);
+        
+            if( dictField.mandatory() && !_common.(fieldId) )
+                    ret = checkFailed(strfmt("%1 alanı zorunlu olduğu halde boş bırakılmış.", dictField.label()));
+        }
+        
+        return ret;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>execSqlQuery</Name>
+				<Source><![CDATA[
+    public static void execSqlQuery( str _queryText )
+    {
+        Connection                      con;
+        Statement                       stmt;
+        SqlStatementExecutePermission   serverSessionQueryPermission;
+        
+        con = new Connection();
+        con.ttsbegin();
+        stmt=con.createStatement();
+        ServerSessionQueryPermission=new SqlStatementExecutePermission( _queryText );
+        ServerSessionQueryPermission.assert();
+        stmt.executeUpdate( _queryText );
+        con.ttscommit();
+        CodeAccessPermission::revertAssert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>execStoredProcedure</Name>
+				<Source><![CDATA[
+    static void execStoredProcedure(str 200 _query)
+    {
+        str                             statement;
+        SqlStatementExecutePermission   permission;
+        
+        statement = _query;
+        
+        permission = new SqlStatementExecutePermission   (statement);
+        permission.assert();
+        
+        new Connection().createStatement().executeUpdate (statement);
+        permission = null;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createUniqueId</Name>
+				<Source><![CDATA[
+    static Description createUniqueId()
+    {
+        return strfmt("%1-%2-%3",
+                DateTimeUtil::applyTimeZoneOffset(DateTimeUtil::utcNow(), DateTimeUtil::getUserPreferredTimeZone() ),
+                curuserid(),
+                sessionId() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isWeekEnd</Name>
+				<Source><![CDATA[
+    static boolean isWeekEnd( TransDate _transDate )
+    {
+        if( dayofWk( _transDate ) == 6 || dayofWk( _transDate ) == 7 )
+			return true;
+        else
+			return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isWorkDate</Name>
+				<Source><![CDATA[
+	static boolean isWorkDate( CalendarId _calendarId, TransDate _transDate )
+    {
+        WorkCalendarDate calendarDate;
+        
+        select firstonly calendarDate
+            where calendarDate.CalendarId == _calendarId
+                && calendarDate.TransDate == _transDate;
+        
+        if( calendarDate.WorkTimeControl == WorkTimeControl::Open )
+			return true;
+        
+		return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>strRemoveHiddenChars</Name>
+				<Source><![CDATA[
+    static str strRemoveHiddenChars(str _text)
+    {
+        return strrem(_text,'\n\r\t');
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>strRemoveHiddenCharsAndWhiteSpace</Name>
+				<Source><![CDATA[
+    static str strRemoveHiddenCharsAndWhiteSpace(str _text)
+    {
+        return strrem(_text,' \n\r\t');
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>strAlpha</Name>
+				<Source><![CDATA[
+    static str strAlpha(str _text)
+    {
+        return strAlpha(_text);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTempFilePath</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets the temporary file path where a file will be saved.
+    /// </summary>
+    /// <returns>
+    /// A temporary file path.
+    /// </returns>
+    /// <remarks>
+    /// If code is running on the client, the My Documents folder of the user is returned; otherwise, a
+    /// temporary path for the user running the AOS is returned.
+    /// </remarks>
+    public static str getTempFilePath()
+    {
+        #WinAPI
+    
+        if (isRunningOnServer() || xSession::isCLRSession())
+        {
+            new FileIOPermission('', 'r').assert();
+            return WinAPIServer::getTempPath();
+        }
+        else
+        {
+            return WinAPI::getFolderPath(#CSIDL_PERSONAL);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processCLRErrorException</Name>
+				<Source><![CDATA[
+    public static str processCLRErrorException(boolean _throw = true )
+    {
+        str strError;
+        CLRObject exc;
+        CLRObject innerExc;
+        CLRObject clrExcMessage;
+
+        exc = CLRInterop::getLastException();
+        if(exc)
+        {
+            clrExcMessage = exc.get_Message();
+            innerExc = exc.get_InnerException();
+            while(innerExc != null)
+            {
+                clrExcMessage = innerExc.get_Message();
+                innerExc = innerExc.get_InnerException();
+            }
+
+            strError = CLRInterop::getAnyTypeForObject(clrExcMessage);
+
+            if (_throw)
+            {
+                throw error("Update has been cancelled");
+            }
+        }
+
+        return strError;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>compareStringLengthWithFieldMaxLength</Name>
+				<Source><![CDATA[
+    public static str compareStringLengthWithFieldMaxLength(TableId _tableId, FieldId _fieldId, str _txt)
+    {
+        SysDictField dictField = new SysDictField(_tableId, _fieldId);
+	
+		// Metin alana girilecek değerin uzunluğu alanın en yüksek uzunluğundan fazla ise sistem hata fırlatıp işlemi kesiyor
+		// Bu hatayı almamak için metin kırpılıp gönderilecektir
+		if( _txt && dictField && strLen(_txt) > dictField.stringLen() )
+		{
+			_txt = subStr(_txt, 0, dictField.stringLen() );
+		}
+		
+        return _txt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>decryptReal</Name>
+				<Source><![CDATA[
+    public server static str decryptReal(int64 _encryptCode, str _oldValue)
+    {
+        CryptoApi cryptoApi;
+        Container cont,cont1;
+        ContainerClass cc;
+
+
+        /* Salt is like a password, While encrypting and descrypting the phrase,
+		the CryptoAPI class has to instantiated with same salt(99999999999).
+		The phrases/words are encrypted & decrypted based on the salt. */
+        cryptoApi = new CryptoApi(_encryptCode);
+        cont = BinData::stringToData(_oldValue);
+        cont1 = ContainerClass::blob2Container(CryptoApi.decrypt(cont));
+
+        return con2str(cont1);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cryptReal</Name>
+				<Source><![CDATA[
+    public server static str cryptReal(int64 _encryptCode, real _oldValue)
+    {
+        CryptoApi cryptoApi;
+        Container cont,cont1;
+        ContainerClass cc;
+
+
+        /* Salt is like a password, While encrypting and descrypting the phrase,
+		the CryptoAPI class has to instantiated with same salt(99999999999).
+		The phrases/words are encrypted & decrypted based on the salt. */
+        if(_encryptCode != 0)
+        {
+            cryptoApi = new CryptoApi(_encryptCode);
+            cc = new ContainerClass([num2Str(_oldValue, 2,2,1,0)]);
+            cont = CryptoApi.encrypt(cc.toBlob()); // The encrypt method requires BLOB as a parameter
+            //cont1 = ContainerClass::blob2Container(CryptoApi.decrypt(cont));
+            return BinData::dataToString(cont);
+        }
+        else
+			return '0';
+        //info(con2str(cont1));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>testCryptTxt</Name>
+				<Source><![CDATA[
+    public server static void testCryptTxt()
+    {
+        CryptoApi cryptoApi;
+        Container cont,cont1;
+        ContainerClass cc;
+
+
+        /* Salt is like a password, While encrypting and descrypting the phrase,
+		the CryptoAPI class has to instantiated with same salt(99999999999).
+		The phrases/words are encrypted & decrypted based on the salt. */
+        cryptoApi = new CryptoApi(99999999999);
+        cc = new ContainerClass(["test123"]);
+        cont = CryptoApi.encrypt(cc.toBlob()); // The encrypt method requires BLOB as a parameter
+        cont1 = ContainerClass::blob2Container(CryptoApi.decrypt(cont));
+        info(Strfmt("Encrypted:%1",BinData::dataToString(cont)));
+        info(con2str(cont1));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>attachFile</Name>
+				<Source><![CDATA[
+    public static void attachFile(str _filePath, TableId _refTableId, RefRecId _refRecId, DataAreaId _refDataAreaId, boolean _showInBrowser = false)
+    {
+        System.IO.Stream        stream;
+
+        using (System.IO.FileStream fileStream = new System.IO.FileStream(_filePath, System.IO.FileMode::OpenOrCreate, System.IO.FileAccess::ReadWrite))
+        {
+            stream = fileStream;
+            stream.Seek(0, System.IO.SeekOrigin::Begin);
+               
+            DocuRef docuref = DocumentManagement::attachFile(_refTableId, _refRecId, _refDataAreaId,
+				DocuType::typeFile(), stream, System.IO.Path::GetFileName(_filePath), System.Web.MimeMapping::GetMimeMapping(_filePath), System.IO.Path::GetFileName(_filePath));
+
+            // download/view the attachment
+            if( _showInBrowser )
+            {
+                str displayUrl = DocumentManagement::getAttachmentPublicUrl(docuref);
+                Browser br = new Browser();
+                br.navigate(displayUrl);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteAttachments</Name>
+				<Source><![CDATA[
+    public static void deleteAttachments(TableId _refTableId, RefRecId _refRecId, DataAreaId _refDataAreaId)
+    {
+        DocuRef docuRef;
+
+        ttsbegin;
+        
+        delete_from docuRef
+            where docuRef.RefTableId == _refTableId
+            && docuRef.RefRecId == _refRecId
+            && docuRef.RefCompanyId == _refDataAreaId;
+
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getCountryRegionCode</Name>
+				<Source><![CDATA[
+    public static LogisticsAddressCountryRegionId getCountryRegionCode(DataAreaId _dataAreaId = curExt())
+    {
+        return LogisticsAddressCountryRegion::findByISOCode(SysCountryRegionCode::countryInfo(_dataAreaId)).CountryRegionId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperExcelExport</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class BuzHelperExcelExport
+{
+    OfficeOpenXml.ExcelPackage  package;
+    OfficeOpenXml.ExcelWorksheet activeWorksheet;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static BuzHelperExcelExport construct()
+    {
+        BuzHelperExcelExport excelExport = new BuzHelperExcelExport();
+
+        return excelExport;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPackage</Name>
+				<Source><![CDATA[
+    public OfficeOpenXml.ExcelPackage  parmPackage(OfficeOpenXml.ExcelPackage  _package = package)
+    {
+        package = _package;
+        return package;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>saveAs</Name>
+				<Source><![CDATA[
+    public void saveAs(System.IO.MemoryStream _memoryStream, Filename _fileName)
+    {
+        //DocuFileSave::processSaveResult(_memoryStream, saveResult); // Download the file.
+        File::SendFileToUser(_memoryStream, _fileName);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmActiveWorkSheet</Name>
+				<Source><![CDATA[
+    public OfficeOpenXml.ExcelWorksheet parmActiveWorkSheet(OfficeOpenXml.ExcelWorksheet _activeWorksheet = activeWorksheet)
+    {
+        activeWorksheet = _activeWorksheet;
+
+        return activeWorksheet;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>putStr</Name>
+				<Source><![CDATA[
+    void putStr(int _row,int _col,str val,boolean eachOneCell=true, OfficeOpenXml.ExcelWorksheet _activeWorksheet = this.parmActiveWorkSheet())
+    {
+        int valLen,idx,seq;
+        
+        if(eachOneCell)
+            _activeWorksheet.get_Cells().get_Item(_row, _col).set_Value(val);       //_xlsWorkSheet.cells().item(_row,_col).value(val);
+        else
+        {
+            valLen  = strLen(val);
+
+            while(valLen>=0)
+            {
+                _activeWorksheet.get_Cells().get_Item(_row, _col + idx).set_Value(subStr(val,idx,1));
+                //_xlsWorkSheet.cells().item(_row,_col+idx).value(subStr(val,idx,1));
+                idx++;
+
+                valLen--;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>putReal</Name>
+				<Source><![CDATA[
+    void putReal(int _row,int _col, real val, OfficeOpenXml.ExcelWorksheet _activeWorksheet = this.parmActiveWorkSheet())
+    {
+        _activeWorksheet.get_Cells().get_Item(_row, _col).set_Value(val);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>changeActiveSheet</Name>
+				<Source><![CDATA[
+    public void changeActiveSheet(int _sheetNum)
+    {
+        var worksheet = package.get_Workbook().get_Worksheets().get_Item(_sheetNum);
+        this.parmActiveWorkSheet(worksheet);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getMemoryStreamFromDocuRef</Name>
+				<Source><![CDATA[
+    public static System.IO.MemoryStream getMemoryStreamFromDocuRef(Common _common)
+    {
+        DocuRef docuRef;
+        System.IO.MemoryStream memoryStream = new System.IO.MemoryStream();
+
+        if(!_common )
+            return null;
+
+        select firstonly docuRef
+            where docuRef.RefCompanyId == _common.DataAreaId
+            &&   docuRef.RefTableId == _common.TableId
+            &&   docuRef.RefRecId == _common.RecId;
+                                                                 
+        using (System.IO.Stream fileStream = DocumentManagement::getAttachmentStream(docuRef))
+        {
+            fileStream.CopyTo(memoryStream);
+        }
+
+        return memoryStream;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>sampleUsage</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Örnek kullanım
+    /// </summary>
+    public static void sampleUsage()
+    {
+        BuzHelperExcelExport BUZEE = BuzHelperExcelExport::construct();
+
+        System.IO.MemoryStream memoryStream = BuzHelperExcelExport::getMemoryStreamFromDocuRef(null);
+        using (var package = new OfficeOpenXml.ExcelPackage(memoryStream))
+        {
+            BUZEE.parmPackage(package);
+
+            BUZEE.changeActiveSheet(1);
+            BUZEE.putStr(4,1,'value');
+
+            package.Save();
+            memoryStream = package.Stream;
+        }
+        
+        BUZEE.saveAs(memoryStream, 'filename.xlsx');
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

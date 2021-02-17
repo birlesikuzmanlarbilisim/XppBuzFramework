@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperLedgerJournalTrans</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The <c>BuzHelperLedgerJournalTrans</c> is contain specific codes related with LedgerJournalTrans table
+/// </summary>
+class BuzHelperLedgerJournalTrans
+{
+    LedgerJournalTrans			ledgerJournalTrans;
+    ledgerJournalTable			ledgerJournalTable;
+    DimensionDynamicAccount		ledgerDimension;
+    LedgerJournalACType			accountType;
+    LedgerDimensionValueSet		defaultDimension;
+    AmountMST					amount;
+    ExchRate					exchRate;
+    CurrencyCode				currencyCode;
+    TransDate					transDate;
+    Voucher						voucher;
+    LedgerJournalTransTxt		ledgerJournalTransTxt;
+    DimensionDynamicAccount		offsetLedgerDimension;
+    LedgerJournalACType			offsetAccountType;
+    LedgerDimensionValueSet		offsetDefaultDimension;    
+    boolean						generateNewVoucher;
+    boolean						skipValidations;
+    ledgerJournalEngine			ledgerJournalEngine;
+    TaxGroup					taxGroup;
+    TaxItemGroup				taxItemGroup;
+    LedgerTransType				transactionType;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static BuzHelperLedgerJournalTrans construct()
+    {
+        return new BuzHelperLedgerJournalTrans();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalTrans</Name>
+				<Source><![CDATA[
+    public boolean createJournalTrans(boolean _createWithParmLedgerJournalTrans = false)
+    {
+        if( !skipValidations && !this.validate() )
+            return false;
+
+        if( !ledgerJournalEngine )
+        {
+            ledgerJournalEngine = LedgerJournalEngine::construct(ledgerJournalTable.JournalType);
+            ledgerJournalEngine.newJournalActive(ledgerJournalTable);
+        }
+  
+        if( !_createWithParmLedgerJournalTrans )
+        {
+            ledgerJournalTrans.clear();
+            ledgerJournalTrans = this.initCommonLedgerJournalTransFields();
+        }
+
+        if(ledgerJournalTrans.RecId)
+        {
+            ledgerJournalTrans.update();
+            ledgerJournalEngine.write(ledgerJournalTrans);
+        }
+        else
+        {
+            if( ledgerJournalTrans.validateWrite() )
+            {
+                ledgerJournalTrans.insert();
+                ledgerJournalEngine.write(ledgerJournalTrans);
+            }
+        }
+
+        ledgerJournalEngine.buzParmLedgerJournalTrans(ledgerJournalTrans);
+        return ledgerJournalTrans.RecId != 0 ? true : false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate()
+    {
+        boolean ret = true;
+
+        ret = this.validateMandatoryField();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateMandatoryField</Name>
+				<Source><![CDATA[
+    public boolean validateMandatoryField()
+    {
+        boolean ret = true;
+
+        if( !ledgerJournalTable.JournalNum )
+            ret = checkFailed("Günlük başlığı belirtilmelidir");
+
+        if(ledgerDimension == 0 )
+            ret = checkFailed("Hesap belirtilmelidir");
+
+        if( currencyCode == "" )
+            ret = checkFailed("Para birimi belirtilmelidir");
+
+        if( !transDate )
+            ret = checkFailed("Tarih bilgisi doldurulmalıdır");
+
+        //if(!generateNewVoucher && !voucher )
+        //    ret = checkFailed("Fiş numarası belirtilmelidir");
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initCommonLedgerJournalTransFields</Name>
+				<Source><![CDATA[
+    public ledgerJournalTrans initCommonLedgerJournalTransFields()
+    {
+        ledgerJournalTrans.initValue();
+        ledgerJournalEngine.initValue(ledgerJournalTrans);
+        ledgerJournalTrans.JournalNum       = ledgerJournalTable.JournalNum;
+        // Fiş dolu ise ezelim aksi halde fiş numarasını ledgerjournalengine veriyor -->
+        if( voucher )
+            ledgerJournalTrans.Voucher = voucher;
+        else
+            voucher = ledgerJournalTrans.Voucher;
+        // Fiş dolu ise ezelim aksi halde fiş numarasını ledgerjournalengine veriyor <--
+        ledgerJournalTrans.Txt              = ledgerJournalTransTxt;
+        ledgerJournalTrans.AccountType      = accountType;
+        ledgerJournalTrans.LedgerDimension	= ledgerDimension;
+        ledgerJournalEngine.accountModified(LedgerJournalTrans);
+        ledgerJournalTrans.DefaultDimension	= defaultDimension;
+        ledgerJournalTrans.TransDate        = transDate;
+        ledgerJournalTrans.TaxGroup			= taxGroup;
+        ledgerJournalTrans.TaxItemGroup		= taxItemGroup;
+
+        if( offsetLedgerDimension )
+        {
+            ledgerJournalTrans.OffsetAccountType		= offsetAccountType;
+            ledgerJournalTrans.OffsetLedgerDimension	= offsetLedgerDimension;
+            ledgerJournalTrans.OffsetDefaultDimension	= offsetDefaultDimension;
+            ledgerJournalEngine.offsetAccountModified(LedgerJournalTrans);
+        }
+
+        if( amount > 0 )
+            ledgerJournalTrans.AmountCurDebit	= decRound(amount, 2);
+        else
+            ledgerJournalTrans.AmountCurCredit	= abs(decRound(amount, 2));
+        
+        // For defaulting logic to properly default the exchange rate if the user changes the transaction
+        // currency, the exchange rate field state must be reset to not set.
+        ledgerJournalTrans.CurrencyCode     =   currencyCode;
+        ledgerJournalEngine.currencyModified(LedgerJournalTrans);
+
+        if( exchRate )
+            ledgerJournalTrans.ExchRate = exchRate;
+		else
+            exchRate = ledgerJournalTrans.ExchRate;
+        
+        ledgerJournalTrans.calcAmountMST();
+
+        ledgerJournalTrans.Approved = NoYes::Yes;
+        ledgerJournalTrans.Approver = HcmWorkerLookup::currentWorker();
+
+        if( transactionType != LedgerTransType::None )
+            ledgerJournalTrans.TransactionType = transactionType;
+
+        return ledgerJournalTrans;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalEngine</Name>
+				<Source><![CDATA[
+    public LedgerJournalEngine parmLedgerJournalEngine(LedgerJournalEngine _ledgerJournalEngine = ledgerJournalEngine)
+    {
+        ledgerJournalEngine = _ledgerJournalEngine;
+        return ledgerJournalEngine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchRate</Name>
+				<Source><![CDATA[
+    public ExchRate parmExchRate(ExchRate _exchRate = exchRate)
+    {
+        exchRate = _exchRate;
+        return exchRate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSkipValidations</Name>
+				<Source><![CDATA[
+    public boolean parmSkipValidations(boolean _skipValidations = skipValidations)
+    {
+        skipValidations = _skipValidations;
+        return skipValidations;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmGenerateNewVoucher</Name>
+				<Source><![CDATA[
+    public boolean parmGenerateNewVoucher(boolean _generateNewVoucher = generateNewVoucher )
+    {
+        generateNewVoucher = _generateNewVoucher;
+        return generateNewVoucher;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalTrans</Name>
+				<Source><![CDATA[
+    public LedgerJournalTrans parmLedgerJournalTrans(LedgerJournalTrans _ledgerJournalTrans = ledgerJournalTrans)
+    {
+        ledgerJournalTrans = _ledgerJournalTrans;
+        return ledgerJournalTrans;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalTable</Name>
+				<Source><![CDATA[
+    public ledgerJournalTable parmLedgerJournalTable(LedgerJournalTable _ledgerJournalTable = ledgerJournalTable)
+    {
+        ledgerJournalTable = _ledgerJournalTable;
+        return ledgerJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerDimension</Name>
+				<Source><![CDATA[
+    public DimensionDynamicAccount parmLedgerDimension(DimensionDynamicAccount _ledgerDimension = ledgerDimension)
+    {
+        ledgerDimension = _ledgerDimension;
+        return ledgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmOffsetLedgerDimension</Name>
+				<Source><![CDATA[
+    public DimensionDynamicAccount parmOffsetLedgerDimension(DimensionDynamicAccount _offsetLedgerDimension = offsetLedgerDimension)
+    {
+        offsetLedgerDimension = _offsetLedgerDimension;
+        return offsetLedgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAccountType</Name>
+				<Source><![CDATA[
+    public LedgerJournalACType parmAccountType(LedgerJournalACType _accountType = accountType)
+    {
+        accountType = _accountType;
+        return accountType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmOffsetAccountType</Name>
+				<Source><![CDATA[
+    public LedgerJournalACType parmOffsetAccountType(LedgerJournalACType _offsetAccountType = offsetAccountType)
+    {
+        offsetAccountType = _offsetAccountType;
+        return offsetAccountType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDefaultDimension</Name>
+				<Source><![CDATA[
+    public LedgerDimensionValueSet parmDefaultDimension(LedgerDimensionValueSet _defaultDimension = defaultDimension)
+    {
+        defaultDimension = _defaultDimension;
+        return defaultDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmOffsetDefaultDimension</Name>
+				<Source><![CDATA[
+    public LedgerDimensionValueSet parmOffsetDefaultDimension(LedgerDimensionValueSet _offsetDefaultDimension = offsetDefaultDimension)
+    {
+        offsetDefaultDimension = _offsetDefaultDimension;
+        return offsetDefaultDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAmount</Name>
+				<Source><![CDATA[
+    public Amount parmAmount(Amount _amount = amount)
+    {
+        amount = _amount;
+        return amount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCurrencyCode</Name>
+				<Source><![CDATA[
+    public CurrencyCode parmCurrencyCode(CurrencyCode _currencyCode = currencyCode)
+    {
+        currencyCode = _currencyCode;
+        return currencyCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmVoucher</Name>
+				<Source><![CDATA[
+    public Voucher parmVoucher(Voucher _voucher = voucher)
+    {
+        voucher = _voucher;
+        return voucher;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTransDate</Name>
+				<Source><![CDATA[
+    public transDate parmTransDate(transDate _transDate = TransDate)
+    {
+        transDate = _transDate;
+        return transDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalTransTxt</Name>
+				<Source><![CDATA[
+    public LedgerJournalTransTxt parmLedgerJournalTransTxt(LedgerJournalTransTxt _ledgerJournalTransTxt = ledgerJournalTransTxt)
+    {
+        ledgerJournalTransTxt = _ledgerJournalTransTxt;
+        return ledgerJournalTransTxt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTaxGroup</Name>
+				<Source><![CDATA[
+    public TaxGroup parmTaxGroup(taxGroup _taxGroup = taxGroup)
+    {
+        taxGroup = _taxGroup;
+        return taxGroup;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTaxItemGroup</Name>
+				<Source><![CDATA[
+    public TaxItemGroup parmTaxItemGroup(TaxItemGroup _taxItemGroup = taxItemGroup)
+    {
+        taxItemGroup = _taxItemGroup;
+        return taxItemGroup;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTransactionType</Name>
+				<Source><![CDATA[
+    public LedgerTransType parmTransactionType(LedgerTransType _transactionType = transactionType)
+    {
+        transactionType = _transactionType;
+        return transactionType;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperDefaultDimensionStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperDefaultDimensionStatic
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createDefaultDimension</Name>
+				<Source><![CDATA[
+    public static DimensionDefault createDefaultDimension(container _conAttr, container _conValue)
+    {
+        DimensionAttributeValueSetStorage	valueSetStorage = new DimensionAttributeValueSetStorage();
+        DimensionDefault                    result;
+        DimensionAttribute					dimensionAttribute;
+        DimensionAttributeValue				dimensionAttributeValue;
+        DimensionFinancialTag				financialTag;
+        str									dimValue;
+
+        for (int i = 1; i <= conLen(_conAttr); i++)
+        {
+            dimensionAttribute = dimensionAttribute::findByName(conPeek(_conAttr,i));
+            if(!dimensionAttribute)
+                dimensionAttribute = dimensionAttribute::find(conPeek(_conAttr,i));
+
+            if (dimensionAttribute.RecId == 0)
+            {
+                continue;
+            }
+
+            dimValue = conPeek(_conValue,i);
+
+            if (dimValue != "")
+            {
+                dimensionAttributeValue = dimensionAttributeValue::findByDimensionAttributeAndValueNoError(dimensionAttribute,dimValue,false,true);
+                if(!dimensionAttributeValue)
+                {
+                    financialTag = DimensionFinancialTag::findByFinancialTagCategoryAndValue(dimensionAttribute.financialTagCategory(),dimValue);
+                    if(!financialTag)
+                    {
+                        ttsBegin;
+                        financialTag.clear();
+                        financialTag.Description			= strFmt("%1 - %2",dimensionAttribute.Name, dimValue);
+                        financialTag.Value					= dimValue;
+                        financialTag.FinancialTagCategory	= dimensionAttribute.financialTagCategory();
+                        financialTag.insert();
+                        ttsCommit;
+                    }
+                    dimensionAttributeValue = DimensionAttributeValue::findByDimensionAttributeAndEntityInst(dimensionAttribute.RecId, FinancialTag.RecId, true, true);
+                }
+
+                // Add the dimensionAttibuteValue to the default dimension
+                valueSetStorage.addItem(dimensionAttributeValue);
+            }
+        }
+
+        result = valueSetStorage.save();
+
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDimensionValue</Name>
+				<Source><![CDATA[
+    public static DimensionValue getDimensionValue(RecId _defaultDimension, RefRecId _dimensionAttributeRecId)
+    {
+        DimensionAttributeValueSetStorage dimStorage;
+
+        if( !_defaultDimension || !_dimensionAttributeRecId )
+            return "";
+
+        dimStorage = DimensionAttributeValueSetStorage::find(_defaultDimension);
+
+        return dimStorage.getDisplayValueByDimensionAttribute(_dimensionAttributeRecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDimensionDisplayValueName</Name>
+				<Source><![CDATA[
+    public static DimensionDisplayValue getDimensionDisplayValueName(RecId _defaultDimension, RefRecId _dimensionAttributeRecId, DimensionValue _dimensionValue = "")
+    {
+        DimensionValue dimensionValue = _dimensionValue;
+
+        if( !dimensionValue )
+        {
+            if( _dimensionAttributeRecId )
+                dimensionValue = BuzHelperDefaultDimensionStatic::getDimensionValue(_defaultDimension, _dimensionAttributeRecId);
+            else
+                return "";
+        }
+
+        if( dimensionValue )
+            return DimensionAttributeValue::findByDimensionAttributeAndValue(DimensionAttribute::find(_dimensionAttributeRecId), dimensionValue).CachedInvariantName;
+        else
+            return "";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimensionAttributeLookup</Name>
+				<Source><![CDATA[
+    public static void dimensionAttributeLookup(FormStringControl _callingControl, RefRecId _dimensionAttributeRecId)
+    {
+        Query                   query = new Query();
+        QueryBuildDataSource    qbdsDim;
+        QueryBuildRange         qbr;
+        sysTableLookup          sysTableLookup;
+
+        qbdsDim = query.addDataSource(tableNum(DimensionAttributeValueSetItemView));
+        qbdsDim.clearDynalinks();
+        qbr = qbdsDim.addRange(fieldNum(DimensionAttributeValueSetItemView,DimensionAttribute));
+        qbr.value(SysQuery::value(_dimensionAttributeRecId));
+        qbr.status(RangeStatus::Locked);
+        qbr = qbdsDim.addRange(fieldNum(DimensionAttributeValueSetItemView,DisplayValue));
+        qbr.value(SysQuery::valueNotEmptyString());
+        qbr.status(RangeStatus::Locked);
+        qbdsDim.addGroupByField(fieldNum(DimensionAttributeValueSetItemView, DisplayValue));
+
+            
+        sysTableLookup = sysTableLookup::newParameters(tableNum(DimensionAttributeValueSetItemView), _callingControl, true);
+        sysTableLookup.addLookupField(fieldNum(DimensionAttributeValueSetItemView, DisplayValue),true);
+        sysTableLookup.parmUseLookupValue(false);
+
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>addRemoveDimensionValue</Name>
+				<Source><![CDATA[
+    public static DimensionDefault addRemoveDimensionValue(DimensionDefault _defaultDimension,
+        RefRecId _dimensionAttributeRecId,
+        DimensionDisplayValue _dimensionAttributeValue)
+    {
+        DimensionAttributeValueSetStorage   dimStorage = new DimensionAttributeValueSetStorage();
+        DimensionAttribute                  dimAttribute;
+        DimensionAttributeValue             dimAttributeValue;
+        DimensionDefault                    defaultDimension;
+
+        dimStorage          = DimensionAttributeValueSetStorage::find(_defaultDimension);
+        dimAttribute        = DimensionAttribute::find(_dimensionAttributeRecId);
+
+        if( _dimensionAttributeValue )
+        {
+            dimAttributeValue   = DimensionAttributeValue::findByDimensionAttributeAndValue(dimAttribute, _dimensionAttributeValue, true, true);
+            dimStorage.addItem(dimAttributeValue);
+        }
+        else
+        {
+            dimStorage.removeDimensionAttribute(_dimensionAttributeRecId);
+        }
+
+        defaultDimension = dimStorage.save();
+
+        return defaultDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDefaulDimensionFromLedgerDimension</Name>
+				<Source><![CDATA[
+    public static DimensionDefault getDefaulDimensionFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
+    {
+        return LedgerDimensionFacade::getDefaultDimensionFromLedgerDimension(_ledgerDimensionBase);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperProjectStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperProjectStatic
+{
+    /*
+	public static void lookupActivity(FormStringControl ctrl,ProjId _ProjId)
+    {
+        SysTableLookup           sysTableLookup = SysTableLookup::newParameters(tablenum(smmActivities), ctrl);
+        ProjTable                ProjTable =  ProjTable::find(_ProjId);
+        HierarchyTreeTable       TreeTableRoot,TreeTable;
+        Query                    query = new Query();
+        QueryBuildDataSource     qbds,qbds2;
+ 
+        select TreeTableRoot where TreeTableRoot.Name == ProjTable.ProjId &&
+                                   TreeTableRoot.PSAHierarchyLevelType == PSAHierarchyLevelType::Root;
+ 
+        qbds = query.addDataSource(tableNum(smmActivities));
+        
+        qbds2 = qbds.addDataSource(tableNum(HierarchyTreeTable));
+        qbds2.addLink(fieldNum(smmActivities,RecId),fieldNum(HierarchyTreeTable,RefRecId));
+ 
+        qbds2.addRange(fieldNum(HierarchyTreeTable,HierarchyId)).value(SysQuery::value(TreeTableRoot.HierarchyId));
+        //qbds2.addRange(fieldNum(HierarchyTreeTable,Level)).value(SysQuery::value(ProjTable.BuzProjWBSCompLevel));
+ 
+        sysTableLookup.addLookupfield(fieldnum(smmActivities, ActivityNumber));
+        sysTableLookup.addLookupfield(fieldnum(smmActivities, Purpose));
+        
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+    }*/
+
+}
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+</AxClass>

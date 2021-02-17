@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperLedgerJournalTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The <c>BuzHelperLedgerJournalTable</c> is contain specific codes related with LedgerJournalTable table
+/// </summary>
+class BuzHelperLedgerJournalTable
+{
+	LedgerJournalTable	ledgerJournalTable;
+    LedgerJournalNameId journalNameId;
+    Name				journalDescription;
+    DimensionDefault	defaultDimension;
+    boolean				initOtherFieldsFromLedgerJournalName;
+    
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static BuzHelperLedgerJournalTable construct()
+    {
+        return new BuzHelperLedgerJournalTable();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalTable</Name>
+				<Source><![CDATA[
+	public boolean createJournalTable(boolean _createWithParmLedgerJournalTable = false)
+    {
+        JournalTableData    jourTableData;
+        LedgerJournalName	ledgerJournalName = LedgerJournalName::find(journalNameId);
+
+        if( !_createWithParmLedgerJournalTable )
+        {
+
+            ledgerJournalTable.clear();
+            ledgerJournalTable.initValue();
+
+            jourTableData = JournalTableData::newTable(ledgerJournalTable);
+            jourTableData.initFromJournalName(ledgerJournalName);
+			
+			if( initOtherFieldsFromLedgerJournalName)
+                this.initFromLedgerJournalName(ledgerJournalName);
+            ledgerJournalTable.JournalNum = JournalTableData::newTable(ledgerJournalTable).nextJournalId();
+
+            // System lock the journal line if Approver field filled in.
+			ledgerJournalTable.Approver = 0; 
+
+            if( journalDescription )
+				ledgerJournalTable.Name = journalDescription;
+
+            if( defaultDimension )
+				ledgerJournalTable.DefaultDimension = defaultDimension;
+        }
+
+        if( ledgerJournalTable.validateWrite() )
+            ledgerJournalTable.insert();
+
+        return ledgerJournalTable.RecId != 0 ? true : false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initFromLedgerJournalName</Name>
+				<Source><![CDATA[
+	public void initFromLedgerJournalName(LedgerJournalName _ledgerJournalName)
+    {
+        ledgerJournalTable.OffsetLedgerDimension    = _ledgerJournalName.OffsetLedgerDimension;
+        ledgerJournalTable.OffsetAccountType        = _ledgerJournalName.OffsetAccountType;
+        ledgerJournalTable.JournalType              = _ledgerJournalName.JournalType;
+        ledgerJournalTable.DocumentNum              = _ledgerJournalName.DocumentNum;
+        ledgerJournalTable.DetailSummaryPosting     = _ledgerJournalName.DetailSummary;
+        ledgerJournalTable.FixedOffsetAccount       = _ledgerJournalName.FixedOffsetAccount;
+        ledgerJournalTable.RemoveLineAfterPosting   = _ledgerJournalName.RemoveLineAfterPosting;
+        ledgerJournalTable.CurrentOperationsTax     = _ledgerJournalName.CurrentOperationsTax;
+        ledgerJournalTable.LedgerJournalInclTax     = _ledgerJournalName.LedgerJournalInclTax;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalTable</Name>
+				<Source><![CDATA[
+    public ledgerJournalTable parmLedgerJournalTable(LedgerJournalTable _ledgerJournalTable = ledgerJournalTable)
+    {        
+        ledgerJournalTable = _ledgerJournalTable;
+        return ledgerJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerJournalNameId</Name>
+				<Source><![CDATA[
+    public LedgerJournalNameId parmLedgerJournalNameId(LedgerJournalNameId _journalNameId = journalNameId)
+    {
+        journalNameId = _journalNameId;
+        return journalNameId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmJournalDescription</Name>
+				<Source><![CDATA[
+    public Name parmJournalDescription(Name _journalDescription = journalDescription)
+    {
+        journalDescription = _journalDescription;
+        return journalDescription;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDefaultDimension</Name>
+				<Source><![CDATA[
+    public DimensionDefault parmDefaultDimension(DimensionDefault _defaultDimension = defaultDimension)
+    {
+        defaultDimension = _defaultDimension;
+        return defaultDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmInitOtherFieldsFromLedgerJournalName</Name>
+				<Source><![CDATA[
+    public boolean parmInitOtherFieldsFromLedgerJournalName(boolean _initOtherFieldsFromLedgerJournalName = initOtherFieldsFromLedgerJournalName)
+    {
+        initOtherFieldsFromLedgerJournalName = _initOtherFieldsFromLedgerJournalName;
+        return initOtherFieldsFromLedgerJournalName;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

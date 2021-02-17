@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperCustStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperCustStatic
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>unSettleCustTrans</Name>
+				<Source><![CDATA[
+    // AOSRunMode::CalledFrom
+    public static void unSettleCustTrans(Voucher _voucher)
+    {
+        custTable       custTable;
+        custSettlement  custSettlement, custSettlementGroupBy;
+        custTrans       custTrans;
+        SpecTransManager specTransManager;
+        refTableId sourceTableId = tablenum(custTrans);
+        boolean hasTrans;
+        ;
+
+        while select AccountNum from custSettlementGroupBy
+        group by AccountNum
+            where custSettlementGroupBy.OffsetTransVoucher == _voucher
+               && custSettlementGroupBy.CanBeReversed == NoYes::Yes
+        {
+            custTable = custTable::find( custSettlementGroupBy.AccountNum );
+
+            specTransManager = SpecTransManager::newRefTableId(custTable, tablenum(custSettlement), true);
+
+            // > 0 olan kaydı işaretliyoruz sistem karşı bacaklarını kendi işaretliyor
+            while select custSettlement
+            where custSettlement.AccountNum == custSettlementGroupBy.AccountNum
+               && custSettlement.CanBeReversed == NoYes::Yes
+               && custSettlement.SettleAmountCur > 0
+            join custTrans
+                where custTrans.AccountNum == custSettlement.AccountNum
+                   && custTrans.RecId == custSettlement.TransRecId
+                   && custTrans.Voucher == _voucher
+            {
+
+                if (specTransManager.existForOtherSpec(custSettlement.DataAreaId, custSettlement.TableId, custSettlement.RecId) == false)
+                {
+                    specTransManager.insert(custSettlement.DataAreaId, custSettlement.TableId, custSettlement.RecId, custSettlement.SettleAmountCur, custTrans.CurrencyCode);
+                    ///custSettlement.CustVendSettlement::markOffsets(specTransManager, custTrans.CurrencyCode);
+                    hasTrans = true;
+                }
+                else
+                {
+                    error("@SYS117108");
+                }
+            }
+
+            if ( hasTrans && custTrans::reverseTransact( custTable ) )
+            {
+                specTransManager.deleteAll();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

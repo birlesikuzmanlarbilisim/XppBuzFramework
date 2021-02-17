@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperExchRateStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class BuzHelperExchRateStatic
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getExchRate</Name>
+				<Source><![CDATA[
+    public static ExchRate getExchRate(CurrencyCode _fromCurrencyCode, 
+        TransDate _transDate = systemDateGet(),
+		CurrencyCode _toCurrencyCode = Ledger::find(Ledger::current()).AccountingCurrency,
+		ExchangeRateTypeId _exchangeRateTypeId = Ledger::find(Ledger::current()).DefaultExchangeRateType)
+    {
+        ExchangeRate     exchangeRate;
+        ExchangeRateType ExchangeRateType;
+        ExchangeRateCurrencyPair exchangeRateCurrencyPair;
+        real             exchRate;
+
+        select firstonly RecId from exchangeRateCurrencyPair
+                where exchangeRateCurrencyPair.ExchangeRateType == _exchangeRateTypeId
+                &&  exchangeRateCurrencyPair.FromCurrencyCode == _fromCurrencyCode
+                &&  exchangeRateCurrencyPair.ToCurrencyCode   == _toCurrencyCode;
+
+        if( exchangeRateCurrencyPair.RecId )
+        {
+            exchRate = exchangeRate::findByDate(exchangeRateCurrencyPair.RecId, _transDate).ExchangeRate;
+            return exchRate/100;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>curAmount2CurAmount</Name>
+				<Source><![CDATA[
+    public static AmountCur curAmount2CurAmount(CurrencyCode _fromCurrencyCode,
+        CurrencyCode _toCurrencyCode,
+        Amount _amountCur,
+        TransDate _transDate = systemDateGet(),
+        ExchangeRateTypeId _exchangeRateTypeId = Ledger::find(Ledger::current()).DefaultExchangeRateType)
+    {
+        CurrencyExchangeHelper currencyExchangeHelper;
+
+        currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), _transDate);
+        currencyExchangeHelper.parmExchangeRateTypeRecId(_exchangeRateTypeId);
+        
+        return currencyExchangeHelper.calculateCurrencyToCurrencyAmounts(_fromCurrencyCode, _toCurrencyCode, _amountCur).getRoundedAmount();
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

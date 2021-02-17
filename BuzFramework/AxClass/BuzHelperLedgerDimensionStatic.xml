@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>BuzHelperLedgerDimensionStatic</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class BuzHelperLedgerDimensionStatic
+{
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getDynamicAccountFromAccountNumber</Name>
+				<Source><![CDATA[
+    public static LedgerDimensionAccount getDynamicAccountFromAccountNumber(LedgerJournalAC _accountNumber, LedgerJournalACType _accountType)
+    {
+        return LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(_accountNumber, _accountType);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDefaultAccountFromMainAccountRecId</Name>
+				<Source><![CDATA[
+    public static LedgerDimensionAccount getDefaultAccountFromMainAccountRecId(MainAccountRecId _mainAccountRecId)
+    {
+        return LedgerDefaultAccountHelper::getDefaultAccountFromMainAccountRecId(_mainAccountRecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDimensionAttributeFromAccountType</Name>
+				<Source><![CDATA[
+    public static DimensionAttribute getDimensionAttributeFromAccountType(int _accountType,
+        enumId _enumType = enumNum(LedgerJournalACType),
+        ModuleInventCustVend _custVend = ModuleInventCustVend::Cust)
+    {
+        return LedgerDynamicAccountHelper::getDimensionAttributeFromAccountType(_accountType, _enumType, _custVend);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDynamicAccountFromAccountNumberEnumModule</Name>
+				<Source><![CDATA[
+    public static MainAccountRecId getDynamicAccountFromAccountNumberEnumModule(LedgerJournalAC _accountNumber,
+        int                     _accountType,
+        enumId                  _enumType,
+        ModuleInventCustVend    _custVend)
+    {
+        return LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumberEnumModule(_accountNumber, _accountType, _enumType, _custVend );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>serviceCreateLedgerDimension</Name>
+				<Source><![CDATA[
+	public static LedgerDimensionAccount serviceCreateLedgerDimension(RecId _ledgerDimensionId,
+        DimensionDefault _dimensionDefault1 = 0,
+        DimensionDefault _dimensionDefault2 = 0,
+        DimensionDefault _dimensionDefault3 = 0)
+    {
+        return LedgerDimensionFacade::serviceCreateLedgerDimension(_ledgerDimensionId, _dimensionDefault1, _dimensionDefault2, _dimensionDefault3);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>serviceCreateLedgerDimensionV2</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Muhasebe hesabındaki boyut değerleri ile parametre ile gelen boyut değerlerinin birleştirilmesini sağlar
+    /// Parametre ile gelen boyut değerleri baskındır. Eğer hem hesapta hem boyutta değer varsa boyuttaki değer alınır
+    /// </summary>
+    /// <param name="_ledgerDimensionId">
+    /// The ID of the <c>DimensionAttributeValueCombination</c> record that specifies the initial dimension
+    ///    values
+    /// </param>
+    /// <param name="_dimensionDefault1">
+    /// The ID of the first <c>DimensionAttributeValueSet</c> record that provides the default values for
+    ///    the ledger dimension; optional.
+    /// </param>
+    /// <returns>
+    /// The ID of the <c>DimensionAttributeValueCombination</c> record.
+    /// </returns>
+    static LedgerDimensionAccount serviceCreateLedgerDimensionV2(RecId _ledgerDimensionId,
+    DimensionDefault _dimensionDefault1 )
+    {
+        LedgerDimensionAccount          ledgerDimension;
+        DimensionDefault                defaultDimension;
+        LedgerDimensionDefaultAccount   defaultAccount;
+
+        if( !_dimensionDefault1 )
+			return _ledgerDimensionId;
+
+
+        defaultDimension    = LedgerDimensionFacade::getDefaultDimensionFromLedgerDimension(_ledgerDimensionId);
+        defaultAccount      = LedgerDefaultAccountHelper::getDefaultAccountFromLedgerDimension(_ledgerDimensionId);
+
+        ledgerDimension     = LedgerDimensionFacade::serviceCreateLedgerDimension(defaultAccount, _dimensionDefault1, defaultDimension);
+
+        defaultAccount = LedgerDefaultAccountHelper::getDefaultAccountFromLedgerDimension(ledgerDimension);
+        if( !defaultAccount )
+        {
+            ledgerDimension = LedgerDimensionFacade::serviceCreateLedgerDimension(_ledgerDimensionId, _dimensionDefault1, defaultDimension);
+        }
+
+        return ledgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDisplayValueForLedgerDimension</Name>
+				<Source><![CDATA[
+    public static DimensionDisplayValue getDisplayValueForLedgerDimension(DimensionCombinationBase _dimensionCombinationBase)
+    {
+        return LedgerDimensionFacade::getDisplayValueForLedgerDimension(_dimensionCombinationBase);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getMainAccountFromLedgerDimension</Name>
+				<Source><![CDATA[
+    public static MainAccount getMainAccountFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
+    {
+        return LedgerDimensionFacade::getMainAccountFromLedgerDimension(_ledgerDimensionBase);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getMainAccountIdFromLedgerDimension</Name>
+				<Source><![CDATA[
+    public static MainAccountNum getMainAccountIdFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
+    {
+        return LedgerDimensionFacade::getMainAccountIdFromLedgerDimension(_ledgerDimensionBase);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getMainAccountRecIdFromLedgerDimension</Name>
+				<Source><![CDATA[
+    public static MainAccountRecId getMainAccountRecIdFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
+    {
+        return LedgerDimensionFacade::getMainAccountRecIdFromLedgerDimension(_ledgerDimensionBase);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

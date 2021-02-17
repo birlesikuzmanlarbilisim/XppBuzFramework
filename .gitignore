@@ -1,0 +1,9 @@
+AdditionalFiles/
+bin/
+Reports/
+Resources/
+XppMetadata/
+CONSPRO.xref
+Build*
+*.log
+CompileLabels.xml

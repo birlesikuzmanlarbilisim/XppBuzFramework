@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>LedgerJournalEngine_BuzFramework_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[ExtensionOf(classStr(LedgerJournalEngine))]
+final class LedgerJournalEngine_BuzFramework_Extension
+{
+    private LedgerJournalTrans buzLedgerJournalTrans;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>buzParmLedgerJournalTrans</Name>
+				<Source><![CDATA[
+	//Gets and Set LedgerJournalTrans
+    public LedgerJournalTrans buzParmLedgerJournalTrans(LedgerJournalTrans _ledgeJournalTrans = buzLedgerJournalTrans)
+    {
+        buzLedgerJournalTrans = _ledgeJournalTrans;
+        return buzLedgerJournalTrans;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
