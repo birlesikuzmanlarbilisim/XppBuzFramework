@@ -168,11 +168,21 @@ public static class BuzHelperDefaultDimensionStatic
 ]]></Source>
 			</Method>
 			<Method>
-				<Name>getDefaulDimensionFromLedgerDimension</Name>
+				<Name>getDefaultDimensionFromLedgerDimension</Name>
 				<Source><![CDATA[
-    public static DimensionDefault getDefaulDimensionFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
+    public static DimensionDefault getDefaultDimensionFromLedgerDimension(LedgerDimensionBase _ledgerDimensionBase)
     {
         return LedgerDimensionFacade::getDefaultDimensionFromLedgerDimension(_ledgerDimensionBase);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>serviceReplaceAttributeValue</Name>
+				<Source><![CDATA[
+    public static DimensionDefault serviceReplaceAttributeValue(DimensionDefault _target, DimensionDefault _source, RecId _dimensionAttributeId)
+    {
+        return DimensionDefaultFacade::serviceReplaceAttributeValue(_target, _source, _dimensionAttributeId);
     }
 
 ]]></Source>

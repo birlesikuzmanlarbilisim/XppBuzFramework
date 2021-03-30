@@ -152,6 +152,41 @@ public static class BuzHelperLedgerDimensionStatic
 
 ]]></Source>
 			</Method>
+			<Method>
+				<Name>replaceDimensionValue</Name>
+				<Source><![CDATA[
+    public server static LedgerDimensionAccount replaceDimensionValue(
+        LedgerDimensionAccount _ledgerDimension,
+        DimensionAttribute     _dimAttr,
+        DimensionValue         _toDimensionVal)
+    {
+        LedgerDimensionAccount              ledgerDimension;
+        DimensionDefault                    defaultDimension;
+        DimensionDefault                    replaceDimension;
+        DimensionAttributeValue             dimAttrValue;
+        DimensionAttributeValueSetStorage   dimAttrValDimStorage;
+        if (_toDimensionVal != "")
+        {
+            // convert to Default dimensions
+            defaultDimension =       BuzHelperDefaultDimensionStatic::getDefaultDimensionFromLedgerDimension(_ledgerDimension);
+            dimAttrValDimStorage = DimensionAttributeValueSetStorage::find(defaultDimension);
+            dimAttrValue = DimensionAttributeValue::findByDimensionAttributeAndValue(_dimAttr, _toDimensionVal);
+
+            // add dimension value to Default dimension
+            dimAttrValDimStorage.addItemValues(_dimAttr.RecId, dimAttrValue.RecId, dimAttrValue.HashKey);
+            replaceDimension = dimAttrValDimStorage.save();
+            ledgerDimension = BuzHelperLedgerDimensionStatic::serviceCreateLedgerDimensionV2(_ledgerDimension, replaceDimension);
+        }
+        else
+        {
+            ledgerDimension = _ledgerDimension;
+        }
+
+        return ledgerDimension;
+    }
+
+]]></Source>
+			</Method>
 		</Methods>
 	</SourceCode>
 </AxClass>

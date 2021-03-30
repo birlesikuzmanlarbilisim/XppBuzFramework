@@ -35,6 +35,50 @@ class BuzHelperLedgerJournalStatic
 ]]></Source>
 			</Method>
 			<Method>
+				<Name>createHelperLedgerJournalTrans</Name>
+				<Source><![CDATA[
+    public static BuzHelperLedgerJournalTrans createHelperLedgerJournalTrans(ledgerJournalTable _ledgerJournalTable,
+        DimensionDynamicAccount _ledgerDimension,
+        LedgerJournalACType _accountType,
+        LedgerDimensionValueSet _defaultDimension,
+        AmountMST _amount,
+        ExchRate _exchRate,
+        currencyCode _currencyCode,
+        TransDate _transDate,
+        Voucher _voucher,
+        LedgerJournalEngine _ledgerJournalEngine = null,
+        LedgerJournalTransTxt _ledgerJournalTransTxt = "",
+        DimensionDynamicAccount _offsetLedgerDimension = 0,
+        LedgerJournalACType _offsetAccountType = LedgerJournalACType::Ledger,
+        LedgerDimensionValueSet _offsetDefaultDimension = 0,
+        boolean _generateNewVoucher = false,
+        boolean _skipValidations = false)
+    {
+        BuzHelperLedgerJournalTrans helperLedgerJournalTrans = BuzHelperLedgerJournalTrans::construct();
+
+        helperLedgerJournalTrans.parmLedgerJournalTable(_ledgerJournalTable);
+        helperLedgerJournalTrans.parmLedgerJournalEngine(_ledgerJournalEngine);
+        helperLedgerJournalTrans.parmLedgerDimension(_ledgerDimension);
+        helperLedgerJournalTrans.parmAccountType(_accountType);
+        helperLedgerJournalTrans.parmDefaultDimension(_defaultDimension);
+        helperLedgerJournalTrans.parmAmount(_amount);
+        helperLedgerJournalTrans.parmCurrencyCode(_currencyCode);
+        helperLedgerJournalTrans.parmTransDate(_transDate);
+        helperLedgerJournalTrans.parmVoucher(_voucher);
+        helperLedgerJournalTrans.parmLedgerJournalTransTxt(_ledgerJournalTransTxt);
+        helperLedgerJournalTrans.parmOffsetLedgerDimension(_offsetLedgerDimension);
+        helperLedgerJournalTrans.parmOffsetAccountType(_offsetAccountType);
+        helperLedgerJournalTrans.parmOffsetDefaultDimension(_offsetDefaultDimension);
+        helperLedgerJournalTrans.parmGenerateNewVoucher(_generateNewVoucher);
+        helperLedgerJournalTrans.parmSkipValidations(_skipValidations);
+        helperLedgerJournalTrans.parmExchRate(_exchRate);
+
+        return helperLedgerJournalTrans;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
 				<Name>createJournalTrans</Name>
 				<Source><![CDATA[
     public static LedgerJournalEngine createJournalTrans(ledgerJournalTable _ledgerJournalTable,
@@ -78,6 +122,7 @@ class BuzHelperLedgerJournalStatic
         helperLedgerJournalTrans.parmTaxGroup(_taxGroup);
         helperLedgerJournalTrans.parmTaxItemGroup(_taxItemGroup);
         helperLedgerJournalTrans.parmTransactionType(_transactionType);
+        helperLedgerJournalTrans.parmGenerateNewVoucher(_generateNewVoucher);
 
         helperLedgerJournalTrans.createJournalTrans();
         return helperLedgerJournalTrans.parmLedgerJournalEngine();
@@ -167,26 +212,31 @@ class BuzHelperLedgerJournalStatic
 			<Method>
 				<Name>createJournalTransSampleUsage</Name>
 				<Source><![CDATA[
-	public static void createJournalTransSampleUsage()
+    public static void createJournalTransSampleUsage()
     {
         LedgerJournalEngine	ledgerJournalEngine;
         LedgerJournalTable	ledgerJournalTable;
         LedgerJournalTrans  ledgerJournalTrans;
-        LedgerJournalName	ledgerJournalName;
         voucher             voucher;
-        NumberSeq           numberSeq;
-        
-        ledgerJournalEngine = LedgerJournalEngine::construct(ledgerJournalTable.JournalType);
-        ledgerJournalEngine.newJournalActive(ledgerJournalTable);
-
-        numberSeq = NumberSeq::newGetVoucherFromId(ledgerJournalName.NumberSequenceTable);
-        voucher = numberSeq.voucher();
+        BuzHelperLedgerJournalTrans helperLedgerJournalTrans;
 
         while(false)
         {
-            /*ledgerJournalEngine = BuzHelperLedgerJournalStatic::createJournalTrans(ledgerJournalTable, ledgerJournalEngine,
+            /*helperLedgerJournalTrans = BuzHelperLedgerJournalStatic::createHelperLedgerJournalTrans(ledgerJournalTable,
             LedgerDimension, LedgerJournalACType::Ledger, DefaultDimension, GeneralJournalAccountEntry.AccountingCurrencyAmount*-1, 100,
-            Ledger::accountingCurrency(), EndDate, voucher, BuzYearClosingSteps.Text, OffsetLedgerDimension, LedgerJournalACType::Ledger, OffsetDefaultDimension);*/
+            Ledger::accountingCurrency(), EndDate, voucher, ledgerJournalEngine, BuzYearClosingSteps.Text, OffsetLedgerDimension, LedgerJournalACType::Ledger, OffsetDefaultDimension);
+
+			// Parametre olarak istenmemiş ama doldurmak istediğimiz alan olursa aşağıdaki gibi doldurabiliriz
+			// LedgerJournalTrans tablosundaki istediğimiz alanı doldurabiliriz
+            helperLedgerJournalTrans.parmLedgerJournalTrans().Due = 01\01\2021;
+
+            //Günlük satırını oluşturuyoruz.
+			helperLedgerJournalTrans.createJournalTrans();
+
+
+            ledgerJournalEngine = helperLedgerJournalTrans.parmLedgerJournalEngine();
+            ledgerJournalTrans = helperLedgerJournalTrans.parmLedgerJournalTrans();
+            voucher = ledgerJournalTrans.Voucher;*/
         }
     }
 
