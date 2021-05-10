@@ -43,22 +43,34 @@ class BuzHelperLedgerJournalTrans
 ]]></Source>
 			</Method>
 			<Method>
-				<Name>createJournalTrans</Name>
+				<Name>initLedgerJournalEngine</Name>
 				<Source><![CDATA[
-    public boolean createJournalTrans(boolean _createWithParmLedgerJournalTrans = false)
+	public void initLedgerJournalEngine()
     {
-        if( !skipValidations && !this.validate() )
-            return false;
-
         if( !ledgerJournalEngine )
         {
             ledgerJournalEngine = LedgerJournalEngine::construct(ledgerJournalTable.JournalType);
             ledgerJournalEngine.newJournalActive(ledgerJournalTable);
         }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalTrans</Name>
+				<Source><![CDATA[
+    public boolean createJournalTrans(boolean _createWithParmLedgerJournalTrans = false, boolean _dontClearLedgerJournalTrans = false)
+    {
+        if( !skipValidations && !this.validate() )
+            return false;
+
+        this.initLedgerJournalEngine();
   
         if( !_createWithParmLedgerJournalTrans )
         {
-            ledgerJournalTrans.clear();
+            if( !_dontClearLedgerJournalTrans )
+				ledgerJournalTrans.clear();
+
             ledgerJournalTrans = this.initCommonLedgerJournalTransFields();
         }
 
@@ -128,6 +140,8 @@ class BuzHelperLedgerJournalTrans
 				<Source><![CDATA[
     public ledgerJournalTrans initCommonLedgerJournalTransFields()
     {
+        this.initLedgerJournalEngine();
+
         ledgerJournalTrans.initValue();
         ledgerJournalEngine.initValue(ledgerJournalTrans);
         ledgerJournalTrans.JournalNum       = ledgerJournalTable.JournalNum;

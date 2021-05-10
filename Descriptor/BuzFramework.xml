@@ -2,7 +2,8 @@
 <AxModelInfo xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
 	<AppliedUpdates xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
 	<Customization>Allow</Customization>
-	<Description>Frequently used codes</Description>
+	<Description>Frequently used codes&#xD;
+- createLedgerJournalTrans içinde dontClearLedgerJournalTrans parametresi eklendi</Description>
 	<DisplayName>BuzFramework</DisplayName>
 	<Id>895972632</Id>
 	<InternalsVisibleTo xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
@@ -32,5 +33,5 @@
 	<VersionBuild>0</VersionBuild>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
-	<VersionRevision>2</VersionRevision>
+	<VersionRevision>3</VersionRevision>
 </AxModelInfo>
