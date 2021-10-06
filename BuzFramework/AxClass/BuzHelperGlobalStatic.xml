@@ -8,6 +8,7 @@ public static class BuzHelperGlobalStatic
 
 
 
+    
 }
 ]]></Declaration>
 		<Methods>
@@ -673,6 +674,84 @@ public static class BuzHelperGlobalStatic
     public static LogisticsAddressCountryRegionId getCountryRegionCode(DataAreaId _dataAreaId = curExt())
     {
         return LogisticsAddressCountryRegion::findByISOCode(SysCountryRegionCode::countryInfo(_dataAreaId)).CountryRegionId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findPreviousOpenWorkCalendarDate</Name>
+				<Source><![CDATA[
+    static transDate findPreviousOpenWorkCalendarDate(CalendarID _calendarId, TransDate _date)
+    {
+        TransDate			ret;
+        WorkCalendarDate	workCalendarDate;
+
+        workCalendarDate = WorkCalendarDate::find(_calendarId, _date);
+        switch(workCalendarDate.WorkTimeControl)
+        {
+            case WorkTimeControl::Open:
+                ret = _date;
+                break;
+
+            case WorkTimeControl::Closed:
+				select firstonly workCalendarDate
+                    order By TransDate desc
+						where workCalendarDate.CalendarId   == _calendarID 
+						&& workCalendarDate.WorkTimeControl == WorkTimeControl::Open 
+						&& workCalendarDate.TransDate <  _date;
+
+                ret = workCalendarDate.TransDate;
+                break;
+
+            case WorkTimeControl::UseBasic:
+                WorkCalendarTable workCalendarTable = WorkCalenDarTable::find(_calendarID);
+                if(workCalendarTable.BasicCalendarId)
+                    ret = BuzHelperGlobalStatic::findPreviousOpenWorkCalendarDate(workCalendarTable.BasicCalendarId, _date);
+                else
+					throw error("Açık bir tarih bulunamadı");
+                break;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findNextOpenWorkCalendarDate</Name>
+				<Source><![CDATA[
+    static transDate findNextOpenWorkCalendarDate(CalendarID _calendarId, TransDate _date)
+    {
+        TransDate			ret;
+        WorkCalendarDate	workCalendarDate;
+
+        workCalendarDate = WorkCalendarDate::find(_calendarId, _date);
+        switch(workCalendarDate.WorkTimeControl)
+        {
+            case WorkTimeControl::Open:
+                ret = _date;
+                break;
+
+            case WorkTimeControl::Closed:
+                select firstonly workCalendarDate
+                    order By TransDate asc
+                        where workCalendarDate.CalendarId   == _calendarID
+                        && workCalendarDate.WorkTimeControl == WorkTimeControl::Open
+                        && workCalendarDate.TransDate >=  _date;
+
+                ret = workCalendarDate.TransDate;
+                break;
+
+            case WorkTimeControl::UseBasic:
+                WorkCalendarTable workCalendarTable = WorkCalenDarTable::find(_calendarID);
+                if(workCalendarTable.BasicCalendarId)
+                    ret = BuzHelperGlobalStatic::findNextOpenWorkCalendarDate(workCalendarTable.BasicCalendarId, _date);
+                else
+                    throw error("Açık bir tarih bulunamadı");
+                break;
+        }
+
+        return ret;
     }
 
 ]]></Source>

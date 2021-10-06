@@ -3,7 +3,9 @@
 	<AppliedUpdates xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
 	<Customization>Allow</Customization>
 	<Description>Frequently used codes&#xD;
-- createLedgerJournalTrans içinde dontClearLedgerJournalTrans parametresi eklendi</Description>
+- workCalendarDate metotları eklendi&#xD;
+- createLedgerJournalTrans içinde dontClearLedgerJournalTrans parametresi eklendi&#xD;
+</Description>
 	<DisplayName>BuzFramework</DisplayName>
 	<Id>895972632</Id>
 	<InternalsVisibleTo xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
@@ -33,5 +35,5 @@
 	<VersionBuild>0</VersionBuild>
 	<VersionMajor>1</VersionMajor>
 	<VersionMinor>0</VersionMinor>
-	<VersionRevision>3</VersionRevision>
+	<VersionRevision>4</VersionRevision>
 </AxModelInfo>
